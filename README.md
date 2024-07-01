@@ -1,21 +1,25 @@
 # OKD 4 Bare Metal Install - User Provisioned Infrastructure (UPI)
 
-Forked from https://github.com/ryanhay/ocp4-metal-install
+## Objective
 
-Original Youtube Video at https://www.youtube.com/watch?v=d03xg2PKOPg
+Forked from https://github.com/ryanhay/ocp4-metal-install and update it to use latest and open technologies.
 
-New Youtube Video at https://www.youtube.com/watch?v=xxxxxxxxxxx
+Thank [ryanhay](https://github.com/ryanhay/). Original RyanHay's Youtube Video at https://www.youtube.com/watch?v=d03xg2PKOPg
 
+New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
+
+## Compare
 
 | Tables   |      Before      |  Current |  Others |
 |----------|:-------------:|:------:|------:|
 | Hypervisor | VMware ESXi | Proxmox PVE |
-| Enterprise Container Orchestration Platform |  OpenShift | OKD4 |
+| Enterprise<br/>Container Orchestration Platform<br/>(With Monitoring, Log and e.t.c.) |  OpenShift | OKD4 |
 | Container Orchestration Platform |    Kubernetes   |   Kubernetes | Portainer
 | Container Engine | Podman | Podman |
 | Container Runtime | Docker | CRI-O | Contained
+| Container OS | Redhat CoreOS | Fedora CoreOS | 
 
-
+## Outline
 - [OpenShift 4 Bare Metal Install - User Provisioned Infrastructure (UPI)](#openshift-4-bare-metal-install---user-provisioned-infrastructure-upi)
   - [Architecture Diagram](#architecture-diagram)
   - [Download Software](#download-software)
@@ -38,49 +42,43 @@ New Youtube Video at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
 ## Download Software
 
-1. Download [CentOS 8 x86_64 image](https://www.centos.org/centos-linux/)
-1. Login to [RedHat OpenShift Cluster Manager](https://cloud.redhat.com/openshift)
-1. Select 'Create Cluster' from the 'Clusters' navigation menu
-1. Select 'RedHat OpenShift Container Platform'
-1. Select 'Run on Bare Metal'
-1. Download the following files:
-
-   - Openshift Installer for Linux
-   - Pull secret
-   - Command Line Interface for Linux and your workstations OS
-   - Red Hat Enterprise Linux CoreOS (RHCOS)
-     - rhcos-X.X.X-x86_64-metal.x86_64.raw.gz
-     - rhcos-X.X.X-x86_64-installer.x86_64.iso (or rhcos-X.X.X-x86_64-live.x86_64.iso for newer versions)
+1. Download [Rocky Linux 9 x86_64 image](https://rockylinux.org/download/)
+1. Download [OKD4](https://github.com/okd-project/okd/releases)
+   - OKD4 Installer for Linux
+      - openshift-client-linux-x.x.x-x.okd-x-x-x-x.tar.gz
+      - openshift-install-linux-x.x.x-x.okd-x-x-x-x.tar.gz
+1. Download [Fedora CoreOS](https://fedoraproject.org/coreos/download?stream=stable)
+   - Fedora CoreOS (FCOS)
+     - fedora-coreos-x.x.x.x-metal.x86_64.raw.xz
+     - fedora-coreos-x.x.x.x-live.x86_64.iso
 
 ## Prepare the 'Bare Metal' environment
 
-> VMware ESXi used in this guide
+> Proxmox PVE used in this guide
 
-1. Copy the CentOS 8 iso to an ESXi datastore
-1. Create a new Port Group called 'OCP' under Networking
-    - (In case of VirtualBox choose "Internal Network" when creating each VM and give it the same name. ocp for instance)
-    - (In case of ProxMox you may use the same network bridge and choose a specific VLAN tag. 50 for instance) 
+1. Copy the Rocky Linux 9 iso to an Proxmox PVE ISO Images
+1. Create a new VLAN tag bridge, VLAN's ID 50.
 1. Create 3 Control Plane virtual machines with minimum settings:
    - Name: ocp-cp-# (Example ocp-cp-1)
    - 4vcpu
    - 8GB RAM
    - 50GB HDD
    - NIC connected to the OCP network
-   - Load the rhcos-X.X.X-x86_64-installer.x86_64.iso image into the CD/DVD drive
+   - Load the fedora-coreos-x.x.x.x-live.x86_64.iso image into the CD/DVD drive
 1. Create 2 Worker virtual machines (or more if you want) with minimum settings:
    - Name: ocp-w-# (Example ocp-w-1)
    - 4vcpu
    - 8GB RAM
    - 50GB HDD
    - NIC connected to the OCP network
-   - Load the rhcos-X.X.X-x86_64-installer.x86_64.iso image into the CD/DVD drive
+   - Load the fedora-coreos-x.x.x.x-live.x86_64.iso image into the CD/DVD drive
 1. Create a Bootstrap virtual machine (this vm will be deleted once installation completes) with minimum settings:
    - Name: ocp-boostrap
    - 4vcpu
    - 8GB RAM
    - 50GB HDD
    - NIC connected to the OCP network
-   - Load the rhcos-X.X.X-x86_64-installer.x86_64.iso image into the CD/DVD drive
+   - Load the fedora-coreos-x.x.x.x-live.x86_64.iso image into the CD/DVD drive
 1. Create a Services virtual machine with minimum settings:
    - Name: ocp-svc
    - 4vcpu
@@ -88,14 +86,14 @@ New Youtube Video at https://www.youtube.com/watch?v=xxxxxxxxxxx
    - 120GB HDD
    - NIC1 connected to the VM Network (LAN)
    - NIC2 connected to the OCP network
-   - Load the CentOS_8.iso image into the CD/DVD drive
+   - Load the RockyLinux_9.iso image into the CD/DVD drive
 1. Boot all virtual machines so they each are assigned a MAC address
 1. Shut down all virtual machines except for 'ocp-svc'
-1. Use the VMware ESXi dashboard to record the MAC address of each vm, these will be used later to set static IPs
+1. Use the Proxmox PVE dashboard to record the MAC address of each vm, these will be used later to set static IPs
 
 ## Configure Environmental Services
 
-1. Install CentOS8 on the ocp-svc host
+1. Install RockyLinux9 on the ocp-svc host
 
    - Remove the home dir partition and assign all free storage to '/'
    - Optionally you can install the 'Guest Tools' package to have monitoring and reporting in the VMware ESXi dashboard
@@ -106,7 +104,11 @@ New Youtube Video at https://www.youtube.com/watch?v=xxxxxxxxxxx
 1. Move the files downloaded from the RedHat Cluster Manager site to the ocp-svc node
 
    ```bash
-   scp ~/Downloads/openshift-install-linux.tar.gz ~/Downloads/openshift-client-linux.tar.gz ~/Downloads/rhcos-metal.x86_64.raw.gz root@{ocp-svc_IP_address}:/root/
+   scp \
+      ~/Downloads/openshift-client-linux-x.x.x-x.okd-x-x-x-x.tar.gz \
+      ~/Downloads/openshift-install-linux-x.x.x-x.okd-x-x-x-x.tar.gz \
+      ~/Downloads/fedora-coreos-x.x.x.x-metal.x86_64.raw.xz \
+      root@{ocp-svc_IP_address}:/root/
    ```
 
 1. SSH to the ocp-svc vm
@@ -118,7 +120,7 @@ New Youtube Video at https://www.youtube.com/watch?v=xxxxxxxxxxx
 1. Extract Client tools and copy them to `/usr/local/bin`
 
    ```bash
-   tar xvf openshift-client-linux.tar.gz
+   tar xvf openshift-client-linux-*.tar.gz
    mv oc kubectl /usr/local/bin
    ```
 
@@ -132,10 +134,10 @@ New Youtube Video at https://www.youtube.com/watch?v=xxxxxxxxxxx
 1. Extract the OpenShift Installer
 
    ```bash
-   tar xvf openshift-install-linux.tar.gz
+   tar xvf openshift-install-linux-*.tar.gz
    ```
 
-1. Update CentOS so we get the latest packages for each of the services we are about to install
+1. Update RockyLinux so we get the latest packages for each of the services we are about to install
 
    ```bash
    dnf update
@@ -147,10 +149,10 @@ New Youtube Video at https://www.youtube.com/watch?v=xxxxxxxxxxx
    dnf install git -y
    ```
 
-1. Download [config files](https://github.com/ryanhay/ocp4-metal-install) for each of the services
+1. Download [config files](https://github.com/kennykhooky/okd4-metal-install) for each of the services
 
    ```bash
-   git clone https://github.com/ryanhay/ocp4-metal-install
+   git clone https://github.com/kennykhooky/okd4-metal-install
    ```
 
 1. OPTIONAL: Create a file '~/.vimrc' and paste the following (this helps with editing in vim, particularly yaml files):
