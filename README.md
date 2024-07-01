@@ -1,4 +1,20 @@
-# OpenShift 4 Bare Metal Install - User Provisioned Infrastructure (UPI)
+# OKD 4 Bare Metal Install - User Provisioned Infrastructure (UPI)
+
+Forked from https://github.com/ryanhay/ocp4-metal-install
+
+Original Youtube Video at https://www.youtube.com/watch?v=d03xg2PKOPg
+
+New Youtube Video at https://www.youtube.com/watch?v=xxxxxxxxxxx
+
+
+| Tables   |      Before      |  Current |  Others |
+|----------|:-------------:|:------:|------:|
+| Hypervisor | VMware ESXi | Proxmox PVE |
+| Enterprise Container Orchestration Platform |  OpenShift | OKD4 |
+| Container Orchestration Platform |    Kubernetes   |   Kubernetes | Portainer
+| Container Engine | Podman | Podman |
+| Container Runtime | Docker | CRI-O | Contained
+
 
 - [OpenShift 4 Bare Metal Install - User Provisioned Infrastructure (UPI)](#openshift-4-bare-metal-install---user-provisioned-infrastructure-upi)
   - [Architecture Diagram](#architecture-diagram)
