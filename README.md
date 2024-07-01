@@ -1,8 +1,12 @@
-# OKD 4 Bare Metal Install - User Provisioned Infrastructure (UPI)
+# OKD4 Bare Metal Install - User Provisioned Infrastructure (UPI)
 
 ## Objective
 
-Forked from https://github.com/ryanhay/ocp4-metal-install and update it to use latest and open technologies.
+Maintain a Open Enterprise Container Orchestration Platform, OKD4
+Redo RyanHay's repo and update it to use latest and open technologies.
+
+- Forked from https://github.com/ryanhay/ocp4-metal-install 
+- New repo at https://github.com/kennykhooky/okd4-metal-install
 
 Thank [ryanhay](https://github.com/ryanhay/). Original RyanHay's Youtube Video at https://www.youtube.com/watch?v=d03xg2PKOPg
 
