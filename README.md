@@ -6,7 +6,7 @@ Maintain a Open Enterprise Container Orchestration Platform, OKD4.
 
 Redo RyanHay's tutorial and update it to use latest and open technologies.
 
-- Forked from https://github.com/ryanhay/ocp4-metal-install 
+- Forked from https://github.com/ryanhay/okd4-metal-install 
 - New repo at https://github.com/kennykhooky/okd4-metal-install
 
 Thank [ryanhay](https://github.com/ryanhay/) for the original RyanHay's video tutorial at https://www.youtube.com/watch?v=d03xg2PKOPg
@@ -287,6 +287,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    ```bash
    systemctl enable named
    systemctl start named
+   systemctl restart named
    systemctl status named
    ```
 
@@ -327,7 +328,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    Edit dhcpd.conf from the cloned git repo to have the correct mac address for each host and copy the conf file to the correct location for the DHCP service to use
 
    ```bash
-   \cp ~/ocp4-metal-install/dhcpd.conf /etc/dhcp/dhcpd.conf
+   cp ~/okd4-metal-install/dhcpd.conf /etc/dhcp/dhcpd.conf
    ```
 
    Configure the Firewall
@@ -340,7 +341,9 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    Enable and start the service
 
    ```bash
+   dhcpd -t -cf /etc/dhcp/dhcpd.conf
    systemctl enable dhcpd
+   systemctl restart dhcpd
    systemctl start dhcpd
    systemctl status dhcpd
    ```
@@ -357,6 +360,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    Change default listen port to 8080 in httpd.conf
 
    ```bash
+   cat /etc/httpd/conf/httpd.conf | grep "^Listen" 
    sed -i 's/Listen 80/Listen 0.0.0.0:8080/' /etc/httpd/conf/httpd.conf
    ```
 
@@ -393,7 +397,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    Copy HAProxy config
 
    ```bash
-   \cp ~/ocp4-metal-install/haproxy.cfg /etc/haproxy/haproxy.cfg
+   cp ~/okd4-metal-install/haproxy.cfg /etc/haproxy/haproxy.cfg
    ```
 
    Configure the Firewall
@@ -418,6 +422,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    setsebool -P haproxy_connect_any 1 # SELinux name_bind access
    systemctl enable haproxy
    systemctl start haproxy
+   systemctl restart haproxy
    systemctl status haproxy
    ```
 
@@ -436,6 +441,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    Check available disk space and its location `df -h`
 
    ```bash
+   df -h
    mkdir -p /shares/registry
    chown -R nobody:nobody /shares/registry
    chmod -R 777 /shares/registry
@@ -481,7 +487,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 1. Copy the install-config.yaml included in the clones repository to the install directory
 
    ```bash
-   cp ~/ocp4-metal-install/install-config.yaml ~/ocp-install
+   cp ~/okd4-metal-install/install-config.yaml ~/ocp-install
    ```
 
 1. Update the install-config.yaml with your own pull-secret and ssh key.
@@ -667,7 +673,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 1. Create the persistent volume for the 'image-registry-storage' pvc to bind to
 
    ```bash
-   oc create -f ~/ocp4-metal-install/manifest/registry-pv.yaml
+   oc create -f ~/okd4-metal-install/manifest/registry-pv.yaml
    ```
 
 1. After a short wait the 'image-registry-storage' pvc should now be bound
@@ -680,10 +686,10 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
 1. Apply the `oauth-htpasswd.yaml` file to the cluster
 
-   > This will create a user 'admin' with the password 'password'. To set a different username and password substitue the htpasswd key in the '~/ocp4-metal-install/manifest/oauth-htpasswd.yaml' file with the output of `htpasswd -n -B -b <username> <password>`
+   > This will create a user 'admin' with the password 'password'. To set a different username and password substitue the htpasswd key in the '~/okd4-metal-install/manifest/oauth-htpasswd.yaml' file with the output of `htpasswd -n -B -b <username> <password>`
 
    ```bash
-   oc apply -f ~/ocp4-metal-install/manifest/oauth-htpasswd.yaml
+   oc apply -f ~/okd4-metal-install/manifest/oauth-htpasswd.yaml
    ```
 
 1. Assign the new user (admin) admin permissions
