@@ -2,13 +2,14 @@
 
 ## Objective
 
-Maintain a Open Enterprise Container Orchestration Platform, OKD4
-Redo RyanHay's repo and update it to use latest and open technologies.
+Maintain a Open Enterprise Container Orchestration Platform, OKD4.
+
+Redo RyanHay's tutorial and update it to use latest and open technologies.
 
 - Forked from https://github.com/ryanhay/ocp4-metal-install 
 - New repo at https://github.com/kennykhooky/okd4-metal-install
 
-Thank [ryanhay](https://github.com/ryanhay/). Original RyanHay's Youtube Video at https://www.youtube.com/watch?v=d03xg2PKOPg
+Thank [ryanhay](https://github.com/ryanhay/) for the original RyanHay's video tutorial at https://www.youtube.com/watch?v=d03xg2PKOPg
 
 New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
@@ -24,7 +25,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 | Container OS | Redhat CoreOS | Fedora CoreOS | 
 
 ## Outline
-- [OpenShift 4 Bare Metal Install - User Provisioned Infrastructure (UPI)](#openshift-4-bare-metal-install---user-provisioned-infrastructure-upi)
+- [OKD4 Bare Metal Install - User Provisioned Infrastructure (UPI)](#openshift-4-bare-metal-install---user-provisioned-infrastructure-upi)
   - [Architecture Diagram](#architecture-diagram)
   - [Download Software](#download-software)
   - [Prepare the 'Bare Metal' environment](#prepare-the-bare-metal-environment)
@@ -327,6 +328,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    systemctl status dhcpd
    ```
 
+# Setup Web Server at OCP-SVC
 1. Install & configure Apache Web Server
 
    Install Apache
@@ -362,6 +364,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    curl localhost:8080
    ```
 
+# Setup Load Balancer at OCP-SVC
 1. Install & configure HAProxy
 
    Install HAProxy
@@ -400,6 +403,8 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    systemctl start haproxy
    systemctl status haproxy
    ```
+
+# Setup Network Shared Folder at OCP-SVC
 
 1. Install and configure NFS for the OpenShift Registry. It is a requirement to provide storage for the Registry, emptyDir can be specified if necessary.
 
