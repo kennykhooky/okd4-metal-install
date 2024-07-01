@@ -263,6 +263,19 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    Configure the firewall for DNS
 
    ```bash
+   #
+   firewall-cmd --add-port=53/udp --zone=external --permanent
+   firewall-cmd --add-port=53/tcp --zone=external --permanent
+   firewall-cmd --reload
+   sestatus
+   cat /etc/selinux/config | grep SELINUX
+   sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+   cat /etc/selinux/config | grep SELINUX
+   reboot
+   dnf -y install tcpdump
+   tcpdump -i any -n port 53
+
+   #
    firewall-cmd --add-port=53/udp --zone=internal --permanent
    # for OCP 4.9 and later 53/tcp is required
    firewall-cmd --add-port=53/tcp --zone=internal --permanent
@@ -278,6 +291,10 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    ```
 
    > At the moment DNS will still be pointing to the LAN DNS server. You can see this by testing with `dig ocp.lan`.
+
+   ```bash
+   dig @192.168.0.209 ocp-svc.ocp.lan
+   ```
 
    Change the LAN nic (ens18) to use 127.0.0.1 for DNS AND ensure `Ignore automatically Obtained DNS parameters` is ticked
 
