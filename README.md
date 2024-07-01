@@ -58,46 +58,59 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
 1. Copy the Rocky Linux 9 iso to an Proxmox PVE ISO Images
 1. Create a new VLAN tag bridge, VLAN's ID 50.
-1. Create 3 Control Plane virtual machines with minimum settings:
-   - Name: ocp-cp-# (Example ocp-cp-1)
-   - 4vcpu
-   - 8GB RAM
-   - 50GB HDD
-   - NIC connected to the OCP network
-   - Load the fedora-coreos-x.x.x.x-live.x86_64.iso image into the CD/DVD drive
-1. Create 2 Worker virtual machines (or more if you want) with minimum settings:
-   - Name: ocp-w-# (Example ocp-w-1)
-   - 4vcpu
-   - 8GB RAM
-   - 50GB HDD
-   - NIC connected to the OCP network
-   - Load the fedora-coreos-x.x.x.x-live.x86_64.iso image into the CD/DVD drive
-1. Create a Bootstrap virtual machine (this vm will be deleted once installation completes) with minimum settings:
-   - Name: ocp-boostrap
-   - 4vcpu
-   - 8GB RAM
-   - 50GB HDD
-   - NIC connected to the OCP network
-   - Load the fedora-coreos-x.x.x.x-live.x86_64.iso image into the CD/DVD drive
 1. Create a Services virtual machine with minimum settings:
+   - VM ID: 101
    - Name: ocp-svc
-   - 4vcpu
-   - 4GB RAM
+   - Load the Rocky-9.4-x86_64-dvd.iso image into the CD/DVD drive
    - 120GB HDD
-   - NIC1 connected to the VM Network (LAN)
-   - NIC2 connected to the OCP network
-   - Load the RockyLinux_9.iso image into the CD/DVD drive
-1. Boot all virtual machines so they each are assigned a MAC address
+   - 4 vcpu
+   - 4096 MB RAM
+   - NIC1 connected to the VM Network (LAN) - vmbr0
+   - Finish
+   - Add NIC2 connected to the OCP network - vmbr0 VLAN Tag: 50
+1. Create a Bootstrap virtual machine (this vm will be deleted once installation completes) with minimum settings:
+   - VM ID: 101
+   - Name: ocp-boostrap
+   - Load the fedora-coreos-x.x.x.x-live.x86_64.iso image into the CD/DVD drive
+   - 50GB HDD
+   - 4 vcpu
+   - 8192 MB RAM
+   - NIC connected to the OCP network - vmbr0 VLAN Tag: 50
+1. Create 3 Control Plane virtual machines with minimum settings:
+   - VM ID: 11#
+   - Name: ocp-cp-# (Example ocp-cp-1)
+   - Load the fedora-coreos-x.x.x.x-live.x86_64.iso image into the CD/DVD drive
+   - 50GB HDD
+   - 4 vcpu
+   - 8192 MB RAM
+   - NIC connected to the OCP network - vmbr0 VLAN Tag: 50
+1. Create 2 Worker virtual machines (or more if you want) with minimum settings:
+   - VM ID: 12#
+   - Name: ocp-w-# (Example ocp-w-1)
+   - Load the fedora-coreos-x.x.x.x-live.x86_64.iso image into the CD/DVD drive
+   - 50GB HDD
+   - 4 vcpu
+   - 8192 MB RAM
+   - NIC connected to the OCP network - vmbr0 VLAN Tag: 50
+1. Record all virtual machines's assigned MAC address
+   - ocp-svc        - BC:24:11:32:A7:FC
+                    - BC:24:11:53:AC:90
+   - ocp-boostrap   - BC:24:11:2D:A5:41
+   - ocp-cp-1       - BC:24:11:BB:5D:21
+   - ocp-cp-2       - BC:24:11:65:CD:46
+   - ocp-cp-3       - BC:24:11:E8:F0:E3
+   - ocp-w-1        - BC:24:11:57:6D:09
+   - ocp-w-2        - BC:24:11:AD:14:F8
 1. Shut down all virtual machines except for 'ocp-svc'
 1. Use the Proxmox PVE dashboard to record the MAC address of each vm, these will be used later to set static IPs
 
 ## Configure Environmental Services
 
 1. Install RockyLinux9 on the ocp-svc host
-
-   - Remove the home dir partition and assign all free storage to '/'
-   - Optionally you can install the 'Guest Tools' package to have monitoring and reporting in the VMware ESXi dashboard
-   - Enable the LAN NIC only to obtain a DHCP address from the LAN network and make note of the IP address (ocp-svc_IP_address) assigned to the vm
+   - DO NOT - lock root account
+   - CHECKED - Allow root SSH login with password
+   - Software Selection : Minimal Install
+   - Installation Destination
 
 1. Boot the ocp-svc VM
 
@@ -105,9 +118,9 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
    ```bash
    scp \
-      ~/Downloads/openshift-client-linux-x.x.x-x.okd-x-x-x-x.tar.gz \
-      ~/Downloads/openshift-install-linux-x.x.x-x.okd-x-x-x-x.tar.gz \
-      ~/Downloads/fedora-coreos-x.x.x.x-metal.x86_64.raw.xz \
+      ./openshift-client-linux-*.tar.gz \
+      ./openshift-install-linux-*.tar.gz \
+      ./fedora-coreos-*-metal.x86_64.raw.xz \
       root@{ocp-svc_IP_address}:/root/
    ```
 
@@ -120,6 +133,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 1. Extract Client tools and copy them to `/usr/local/bin`
 
    ```bash
+   dnf -y install tar
    tar xvf openshift-client-linux-*.tar.gz
    mv oc kubectl /usr/local/bin
    ```
@@ -140,7 +154,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 1. Update RockyLinux so we get the latest packages for each of the services we are about to install
 
    ```bash
-   dnf update
+   dnf update -y
    ```
 
 1. Install Git
@@ -158,10 +172,10 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 1. OPTIONAL: Create a file '~/.vimrc' and paste the following (this helps with editing in vim, particularly yaml files):
 
    ```bash
-   cat <<EOT >> ~/.vimrc
+   cat > ~/.vimrc << EOF
    syntax on
    set nu et ai sts=0 ts=2 sw=2 list hls
-   EOT
+   EOF
    ```
 
    Update the preferred editor
@@ -171,7 +185,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    export KUBE_EDITOR="vim"
    ```
 
-1. Set a Static IP for OCP network interface `nmtui-edit ens224` or edit `/etc/sysconfig/network-scripts/ifcfg-ens224`
+1. Set a Static IP for OCP network interface `nmtui-edit ens19` or edit `/etc/sysconfig/network-scripts/ifcfg-ens19`
 
    - **Address**: 192.168.22.1
    - **DNS Server**: 127.0.0.1
@@ -179,15 +193,15 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    - Never use this network for default route
    - Automatically connect
 
-   > If changes arent applied automatically you can bounce the NIC with `nmcli connection down ens224` and `nmcli connection up ens224`
+   > If changes arent applied automatically you can bounce the NIC with `nmcli connection down ens19` and `nmcli connection up ens19`
 
 1. Setup firewalld
 
    Create **internal** and **external** zones
 
    ```bash
-   nmcli connection modify ens224 connection.zone internal
-   nmcli connection modify ens192 connection.zone external
+   nmcli connection modify ens19 connection.zone internal
+   nmcli connection modify ens18 connection.zone external
    ```
 
    View zones:
@@ -198,7 +212,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
    Set masquerading (source-nat) on the both zones.
 
-   So to give a quick example of source-nat - for packets leaving the external interface, which in this case is ens192 - after they have been routed they will have their source address altered to the interface address of ens192 so that return packets can find their way back to this interface where the reverse will happen.
+   So to give a quick example of source-nat - for packets leaving the external interface, which in this case is ens18 - after they have been routed they will have their source address altered to the interface address of ens18 so that return packets can find their way back to this interface where the reverse will happen.
 
    ```bash
    firewall-cmd --zone=external --add-masquerade --permanent
@@ -224,6 +238,8 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    cat /proc/sys/net/ipv4/ip_forward
    ```
 
+# Setup DNS Server at OCP-SVC
+
 1. Install and configure BIND DNS
 
    Install
@@ -235,8 +251,8 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    Apply configuration
 
    ```bash
-   \cp ~/ocp4-metal-install/dns/named.conf /etc/named.conf
-   cp -R ~/ocp4-metal-install/dns/zones /etc/named/
+   cp ~/okd4-metal-install/dns/named.conf /etc/named.conf
+   cp -R ~/okd4-metal-install/dns/zones /etc/named/
    ```
 
    Configure the firewall for DNS
@@ -258,10 +274,10 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
    > At the moment DNS will still be pointing to the LAN DNS server. You can see this by testing with `dig ocp.lan`.
 
-   Change the LAN nic (ens192) to use 127.0.0.1 for DNS AND ensure `Ignore automatically Obtained DNS parameters` is ticked
+   Change the LAN nic (ens18) to use 127.0.0.1 for DNS AND ensure `Ignore automatically Obtained DNS parameters` is ticked
 
    ```bash
-   nmtui-edit ens192
+   nmtui-edit ens18
    ```
 
    Restart Network Manager
@@ -277,7 +293,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    # The following should return the answer ocp-bootstrap.lab.ocp.lan from the local server
    dig -x 192.168.22.200
    ```
-
+# Setup DHCP Server at OCP-SVC
 1. Install & configure DHCP
 
    Install the DHCP Server
