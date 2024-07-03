@@ -6,7 +6,7 @@ Maintain a Open Enterprise Container Orchestration Platform, OKD4.
 
 Redo RyanHay's tutorial and update it to use latest and open technologies.
 
-- Forked from https://github.com/ryanhay/okd4-metal-install 
+- Forked from https://github.com/ryanhay/ocp4-metal-install 
 - New repo at https://github.com/kennykhooky/okd4-metal-install
 
 Thank [ryanhay](https://github.com/ryanhay/) for the original RyanHay's video tutorial at https://www.youtube.com/watch?v=d03xg2PKOPg
