@@ -109,17 +109,41 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 1. Shut down all virtual machines except for 'ocp-svc'
 1. Use the Proxmox PVE dashboard to record the MAC address of each vm, these will be used later to set static IPs
 
-## Configure Environmental Services
+## Phase 1 : Helper Node (ops-srv VM)
+- Step 1.a : Prepare Helper Node
+- Step 1.b : Setup Basic Tools
+- Step 1.c : Share Internet
+- Step 1.d : Setup DNS Server at OCP-SVC
+- Step 1.e : Setup DHCP Server at OCP-SVC
+- Step 1.f : Setup Web Server at OCP-SVC
+- Step 1.g : Setup Load Balancer at OCP-SVC
+- Step 1.h : Setup Network Shared Folder at OCP-SVC
+- Step 1.i : Prepare Kubernetes Manifests and OKD4 Local Web Installer
 
+### Step 1.a : Prepare Helper Node
 1. Install RockyLinux9 on the ocp-svc host
-   - DO NOT - lock root account
-   - CHECKED - Allow root SSH login with password
-   - Software Selection : Minimal Install
+   - Ensure Rocky-9.4-x86_64-dvd.iso in a CD/DVD rom
+   - Start the VM 
+   - Install RockyLinux 9.4
+   - Language : English (United Stated)
+   - Root Password
+      - Root Password : xxxxxx
+      - Confirm : xxxxxx
+      - Uncheck - lock root account
+      - Check - Allow root SSH login with password
+   - Software Selection
+      - Check - Minimal Install
    - Installation Destination
+      - Check - Local Standard Disks
+   - Begin Installation
 
-1. Boot the ocp-svc VM
+1. Reboot the ocp-svc VM, check IP address as {ocp-svc_IP_address}
 
-1. Move the files downloaded from the RedHat Cluster Manager site to the ocp-svc node
+   ```bash
+   ip a
+   ```
+
+1. Upload downloaded files to the ocp-svc VM
 
    ```bash
    scp \
@@ -135,6 +159,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    ssh root@{ocp-svc_IP_address}
    ```
 
+### Step 1.b : Setup Basic Tools
 1. Extract Client tools and copy them to `/usr/local/bin`
 
    ```bash
@@ -190,6 +215,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    export KUBE_EDITOR="vim"
    ```
 
+### Step 1.c : Share Internet
 1. Set a Static IP for OCP network interface `nmtui-edit ens19` or edit `/etc/sysconfig/network-scripts/ifcfg-ens19`
 
    - **Address**: 192.168.22.1
@@ -243,7 +269,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    cat /proc/sys/net/ipv4/ip_forward
    ```
 
-# Setup DNS Server at OCP-SVC
+### Step 1.d : Setup DNS Server at OCP-SVC
 
 1. Install and configure BIND DNS
 
@@ -316,7 +342,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    # The following should return the answer ocp-bootstrap.lab.ocp.lan from the local server
    dig -x 192.168.22.200
    ```
-# Setup DHCP Server at OCP-SVC
+### Step 1.e : Setup DHCP Server at OCP-SVC
 1. Install & configure DHCP
 
    Install the DHCP Server
@@ -348,7 +374,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    systemctl status dhcpd
    ```
 
-# Setup Web Server at OCP-SVC
+### Step 1.f : Setup Web Server at OCP-SVC
 1. Install & configure Apache Web Server
 
    Install Apache
@@ -385,7 +411,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    curl localhost:8080
    ```
 
-# Setup Load Balancer at OCP-SVC
+### Step 1.g : Setup Load Balancer at OCP-SVC
 1. Install & configure HAProxy
 
    Install HAProxy
@@ -426,7 +452,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    systemctl status haproxy
    ```
 
-# Setup Network Shared Folder at OCP-SVC
+### Step 1.h : Setup Network Shared Folder at OCP-SVC
 
 1. Install and configure NFS for the OpenShift Registry. It is a requirement to provide storage for the Registry, emptyDir can be specified if necessary.
 
@@ -469,8 +495,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    systemctl enable nfs-server rpcbind
    systemctl start nfs-server rpcbind nfs-mountd
    ```
-
-## Generate and host install files
+### Step 1.i : Prepare Kubernetes Manifests and OKD4 Local Web Installer
 
 1. Generate an SSH key pair keeping all default options
 
@@ -547,8 +572,10 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    curl localhost:8080/ocp4/
    ```
 
-## Deploy OpenShift
+## Phase 2 : Deploy OpenShift
+- Step 2.a : Prepare ocp-bootstrap
 
+### Step 2.a : Prepare ocp-bootstrap
 1. Power on the ocp-bootstrap host and ocp-cp-\# hosts and select 'Tab' to enter boot configuration. Enter the following configuration:
 
    ```bash
@@ -577,7 +604,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    sudo coreos-installer install /dev/sda -u http://192.168.22.1:8080/ocp4/rhcos -I http://192.168.22.1:8080/ocp4/worker.ign --insecure --insecure-ignition
    ```
 
-## Monitor the Bootstrap Process
+### Step 2.b : Monitor the Bootstrap Process
 
 1. You can monitor the bootstrap process from the ocp-svc host at different log levels (debug, error, info)
 
@@ -587,7 +614,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
 1. Once bootstrapping is complete the ocp-boostrap node [can be removed](#remove-the-bootstrap-node)
 
-## Remove the Bootstrap Node
+### Step 2.c : Remove the Bootstrap Node
 
 1. Remove all references to the `ocp-bootstrap` host from the `/etc/haproxy/haproxy.cfg` file
 
@@ -600,7 +627,9 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
 1. The ocp-bootstrap host can now be safely shutdown and deleted from the VMware ESXi Console, the host is no longer required
 
-## Wait for installation to complete
+## Phase 3 : Control Plane Node
+
+### Step 3.a : Wait for installation to complete
 
 > IMPORTANT: if you set mastersSchedulable to false the [worker nodes will need to be joined to the cluster](#join-worker-nodes) to complete the installation. This is because the OpenShift Router will need to be scheduled on the worker nodes and it is a dependency for cluster operators such as ingress, console and authentication.
 
@@ -612,6 +641,7 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
 
 1. Continue to join the worker nodes to the cluster in a new tab whilst waiting for the above command to complete
 
+## Phase 4 : Worker Node
 ## Join Worker Nodes
 
 1. Setup 'oc' and 'kubectl' clients on the ocp-svc machine
@@ -644,7 +674,8 @@ New Youtube Video will be at https://www.youtube.com/watch?v=xxxxxxxxxxx
    watch -n5 oc get nodes
    ```
 
-## Configure storage for the Image Registry
+## Phase 5 : Manage OKD4 Farm ( 3 Control Plane Node, 2 Worker)
+### Step 5.1 : Configure storage for the Image Registry
 
 > A Bare Metal cluster does not by default provide storage so the Image Registry Operator bootstraps itself as 'Removed' so the installer can complete. As the installation has now completed storage can be added for the Registry and the operator updated to a 'Managed' state.
 
